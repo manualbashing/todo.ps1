@@ -39,6 +39,16 @@ filter assumeUniqueKey ($Dictionary, $PostFix) {
     Write-Output $key
 } 
 
+filter assumePathExists {
+
+    if (-not (Test-Path $_)) {
+
+        New-Item $_ -Force
+    } else {
+        
+        Get-Item $_
+    }
+}
 function Import-Todo {
 
     [CmdletBinding()]
@@ -61,53 +71,60 @@ function Export-Todo {
         $InputObject,
 
         [Parameter(Mandatory)]
-        [ValidateScript( { Test-Path $_ })]
         [String]
         $Path
     )
-    <#
-    #TODO Implement Confirm if todo already exists
-    #>
+    Begin {
+        $Path = ($Path | assumePathExists).FullName
+        $targetTodos = [System.Collections.ArrayList](Import-Todo -Path $Path)
+        if ($null -eq $targetTodos) {
 
-    $sessionTodos = $InputObject
-    $existingTodos = [System.Collections.ArrayList](Import-Todo -Path $Path)
-    foreach ($sessTodo in $sessionTodos) {
-
-        #TODO What if line doesnt exist
-        $todoAtLine = $existingTodos.Item($sessTodo.SessionData.LineNumber - 1)
-        if ($todoAtLine.SessionData.Hash -eq $sessTodo.SessionData.Hash) {
-
-            Write-Verbose "Item at target line number is identical to source."
-            $targetTodo = $todoAtLine
+            # The target file does not contain any items yet.
+            $targetTodos = [System.Collections.ArrayList]::new()
         }
-        elif ($todoByHash = $existingTodos | Where-Object { $_.SessionData.Hash -eq $sessTodo.SessionData.Hash } | Select-Object -First 1)
-            
-        Write-Verbose "Found target on different line number: $($todoByHash.SessionData.LineNumber)"
-        $targetTodo = $todoByHash
+        <#
+        #TODO Implement Confirm if todo already exists
+        #>
     }
-        
-    if ($targetTodo) {
-        Write-Verbose "Updating existing line in todo file."
-        $replaceIndex = $existingTodos.IndexOf($exTodo)
-        $existingTodos.RemoveAt($replaceIndex)
-        $existingTodos.Insert($replaceIndex, $sessTodo)
-    } else {
-        Write-Verbose "Adding 1 new line to todo file."
-        $existingTodos.Insert($sessTodo)
+    Process {
+
+        foreach ($sessTodo in $InputObject) {
+
+            if ($Path -in $sessTodo.SessionData.Source) {
+                # Todo has its origin in this file and is on the same line.
+                #TODO What if line doesnt exist
+                $lineNumberIndex = $sessTodo.SessionData.LineNumber - 1
+                $todoAtLineOfOrigin = $targetTodos.Item($lineNumberIndex)
+                if ($todoAtLineOfOrigin.SessionData.Hash -eq $sessTodo.SessionData.Hash) {
+
+                    $targetTodos.RemoveAt($lineNumberIndex)
+                    $targetTodos.Insert($lineNumberIndex, $sessTodo)
+                    continue # next session todo item.
+                }
+            }
+
+            # Todo has a different origin or is not on the same line anymore.
+            $firstTodoMatchedByHash = $targetTodos | 
+                Where-Object { $_.SessionData.Hash -eq $sessTodo.SessionData.Hash } | 
+                Select-Object -First 1
+            if ($firstTodoMatchedByHash) {
+
+                $lineNumberIndex = $targetTodos.IndexOf($firstTodoMatchedByHash)
+                $targetTodos.RemoveAt($lineNumberIndex)
+                $targetTodos.Insert($lineNumberIndex, $sessTodo)
+                continue # next session todo item.
+            }
+
+            #Todo was not found in the file.
+            $null = $targetTodos.Add($sessTodo)
+        }
+    }
+    End {
+        $targetTodos | 
+            ConvertTo-TodoString | 
+            Out-File -Encoding utf8 -FilePath $Path
     }
 }
-# Convert to todo string
-# Write to file.
-
-<#
-    [X] Read all todos from source
-    [ ] If target equals source, check if the item on the same line matches.
-        If not, check if the hash is found elsewhere in the file and update there
-        If not then merely append
-    [ ] If target is different from source, look straight for the hash and update there.
-    [ ] Anytime an update happens, the updated entry should be moved to some backup file
-
-    #>
 
 function ConvertTo-TodoString {
     param (
