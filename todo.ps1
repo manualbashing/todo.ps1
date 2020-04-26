@@ -241,3 +241,40 @@ function ConvertTo-Todo {
         }
     }
 }
+
+function Add-TodoProject {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [pscustomobject[]]
+        $InputObject,
+
+        [Parameter(Mandatory)]
+        [String[]]
+        $Project
+    )
+    Begin {
+
+        $normalizedProjectNames = foreach ($projectName in $Project) {
+            
+            if ($projectName -notmatch '^\+') {
+                "+$projectName"
+            } else {
+                $projectName
+            }
+        }
+    }
+    Process {
+        
+        foreach ($todo in $InputObject) {
+
+            $newProjects = $normalizedProjectNames | 
+                Where-Object { $_ -NotIn $todo.Project }
+            $todo.Project = @($todo.Project) + @($newProjects)
+            foreach ($newProjectName in $newProjects) {
+                
+                $todo.Text += " $newProjectName"
+            }
+        }
+    }
+}
