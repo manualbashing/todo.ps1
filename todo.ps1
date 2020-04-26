@@ -70,18 +70,36 @@ function Export-Todo {
     #>
 
     $sessionTodos = $InputObject
-    $existingTodos = Import-Todo -Path $Path
-    $existingHashes = $existingTodos.SessionData.Hash
+    $existingTodos = [System.Collections.ArrayList](Import-Todo -Path $Path)
     foreach ($sessTodo in $sessionTodos) {
 
-        if ($sessTodo.SessionData.Hash -in $existingHashes) {
-            #TODO Test for line number too.
-            Write-Verbose "Todo $($sessTodo.Text) already exists in target file. Will update. "
+        #TODO What if line doesnt exist
+        $todoAtLine = $existingTodos.Item($sessTodo.SessionData.LineNumber - 1)
+        if ($todoAtLine.SessionData.Hash -eq $sessTodo.SessionData.Hash) {
+
+            Write-Verbose "Item at target line number is identical to source."
+            $targetTodo = $todoAtLine
         }
-
+        elif ($todoByHash = $existingTodos | Where-Object { $_.SessionData.Hash -eq $sessTodo.SessionData.Hash } | Select-Object -First 1)
+            
+        Write-Verbose "Found target on different line number: $($todoByHash.SessionData.LineNumber)"
+        $targetTodo = $todoByHash
     }
+        
+    if ($targetTodo) {
+        Write-Verbose "Updating existing line in todo file."
+        $replaceIndex = $existingTodos.IndexOf($exTodo)
+        $existingTodos.RemoveAt($replaceIndex)
+        $existingTodos.Insert($replaceIndex, $sessTodo)
+    } else {
+        Write-Verbose "Adding 1 new line to todo file."
+        $existingTodos.Insert($sessTodo)
+    }
+}
+# Convert to todo string
+# Write to file.
 
-    <#
+<#
     [X] Read all todos from source
     [ ] If target equals source, check if the item on the same line matches.
         If not, check if the hash is found elsewhere in the file and update there
@@ -90,6 +108,34 @@ function Export-Todo {
     [ ] Anytime an update happens, the updated entry should be moved to some backup file
 
     #>
+
+function ConvertTo-TodoString {
+    param (
+        [Parameter(ValueFromPipeline)]
+        [psobject[]]
+        $InputObject
+    )
+    Process {
+        foreach ($todo in $InputObject) {
+            $result = ''
+            if ($todo.Done) {
+                $result += 'x '
+            }
+            if ($todo.CompletitionDate) {
+                $result += ($todo.CompletitionDate + " ")
+            }
+            if ($pri = $todo.Priority) {
+                $result += "($pri) " 
+            }
+            if ($todo.CreationDate) {
+                $result += ($todo.CreationDate + " ")
+            }
+            if ($todo.Text) {
+                $result += $todo.Text
+            }
+        }
+        Write-Output $result
+    }
 }
 
 function ConvertTo-Todo {
@@ -97,7 +143,7 @@ function ConvertTo-Todo {
     [CmdletBinding()]
     param (
         # This parameter cannot be mandatory to deal with blank lines.
-        [Parameter(Mandatory=$false, ValueFromPipeline, Position = 0)]
+        [Parameter(Mandatory = $false, ValueFromPipeline, Position = 0)]
         [String[]]
         $InputObject,
 
@@ -128,13 +174,13 @@ function ConvertTo-Todo {
             #>
             $isValidTodoItem = $line -match (
                 '^(((?<done>x)( (?<completition>[0-9-]{10}))? )|(\((?<priority>[A-Z])\) ))?' + 
-                '(?<creation>[0-9-]{10})?' + 
+                '((?<creation>[0-9-]{10}) )?' + 
                 '(?<text>.+)$' # All the rest remains unparsed at this stage
             )
             $text = $Matches['text']
             if (-not $isValidTodoItem) {
 
-                $i = $i+1
+                $i = $i + 1
                 continue
             }
 
