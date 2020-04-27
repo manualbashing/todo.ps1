@@ -268,12 +268,49 @@ function Add-TodoProject {
         
         foreach ($todo in $InputObject) {
 
-            $newProjects = $normalizedProjectNames | 
+            $removableProjects = $normalizedProjectNames | 
                 Where-Object { $_ -NotIn $todo.Project }
-            $todo.Project = @($todo.Project) + @($newProjects)
-            foreach ($newProjectName in $newProjects) {
+            $todo.Project = @($todo.Project) + @($removableProjects)
+            foreach ($removableProjectName in $removableProjects) {
                 
-                $todo.Text += " $newProjectName"
+                $todo.Text += " $removableProjectName"
+            }
+        }
+    }
+}
+
+function Remove-TodoProject {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [pscustomobject[]]
+        $InputObject,
+
+        [Parameter(Mandatory, Position=0)]
+        [String[]]
+        $Project
+    )
+    Begin {
+
+        $normalizedProjectNames = foreach ($projectName in $Project) {
+            
+            if ($projectName -notmatch '^\+') {
+                "+$projectName"
+            } else {
+                $projectName
+            }
+        }
+    }
+    Process {
+        
+        foreach ($todo in $InputObject) {
+
+            $removableProjects = $normalizedProjectNames | 
+                Where-Object { $_ -In $todo.Project }
+            $todo.Project = $todo.Project | Where-Object { $_ -notin $removableProjects }
+            foreach ($removableProjectName in $removableProjects) {
+                
+                $todo.Text = $todo.Text -replace [regex]::Escape(" $removableProjectName")
             }
         }
     }
