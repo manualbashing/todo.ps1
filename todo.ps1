@@ -249,7 +249,7 @@ function Add-TodoProject {
         [pscustomobject[]]
         $InputObject,
 
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, Position=0)]
         [String[]]
         $Project
     )
