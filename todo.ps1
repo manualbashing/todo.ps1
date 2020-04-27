@@ -75,6 +75,7 @@ function Export-Todo {
         $Path
     )
     Begin {
+        #TODO make path not mandatory. Use DataSession Source if not provided.
         $Path = ($Path | assumePathExists).FullName
         $targetTodos = [System.Collections.ArrayList](Import-Todo -Path $Path)
         if ($null -eq $targetTodos) {
@@ -130,11 +131,20 @@ function ConvertTo-TodoString {
     param (
         [Parameter(ValueFromPipeline)]
         [psobject[]]
-        $InputObject
+        $InputObject,
+
+        [switch]
+        $IncludeLineNumber
     )
+    Begin {
+        $ln = 1
+    }
     Process {
         foreach ($todo in $InputObject) {
             $result = ''
+            if ($IncludeLineNumber.IsPresent) {
+                $result = "$ln. "
+            }
             if ($todo.Done) {
                 $result += 'x '
             }
@@ -150,8 +160,10 @@ function ConvertTo-TodoString {
             if ($todo.Text) {
                 $result += $todo.Text
             }
+            Write-Output $result
+            $ln = $ln + 1
         }
-        Write-Output $result
+        
     }
 }
 
@@ -249,7 +261,7 @@ function Add-TodoProject {
         [pscustomobject[]]
         $InputObject,
 
-        [Parameter(Mandatory, Position=0)]
+        [Parameter(Mandatory, Position = 0)]
         [String[]]
         $Project
     )
@@ -286,7 +298,7 @@ function Remove-TodoProject {
         [pscustomobject[]]
         $InputObject,
 
-        [Parameter(Mandatory, Position=0)]
+        [Parameter(Mandatory, Position = 0)]
         [String[]]
         $Project
     )
@@ -323,8 +335,8 @@ function Invoke-TodoGui {
         $Path = $env:TODOPS1_MASTERFILE
     )
 
-$todoPrompt = "`nTODO>"
-$screenHeader = @"
+    $todoPrompt = "`nTODO>"
+    $screenHeader = @"
 `n
 Gui:    todo.ps1 simple gui 
 Source: $Path
@@ -332,18 +344,30 @@ Agenda: <none>
 `n
 "@
 
-$startScreen = @"
+    $startScreen = @"
     Press "h" for help
 "@
 
-$helpScreen = @"
+    $helpScreen = @"
 `n
     la, ls, listall    List all
+    x[LineNumber]      Toggle Done
+    s, w, save, write  Write todos back to source
     h, ?, help         Help
     q, quit, exit      Quit
 "@
 
-    function userPrompt ($Screen, $Message) {
+    function userPrompt {
+        param (
+            [string]
+            $Screen, 
+            
+            [string]
+            $Message,
+            
+            [switch]
+            $PassThru
+        )
         Clear-Host
         Write-Host ($screenHeader + $Screen)
         if ($Message) {
@@ -352,17 +376,46 @@ $helpScreen = @"
         $userChoice = Read-Host -Prompt $todoPrompt
 
         switch ($userChoice) {
-            {$_ -in 'la','ls','listall'} { 
-                # List all
-                $todos = Import-Todo -Path $Path
-                userPrompt -Screen (($todos | ConvertTo-TodoString) -join "`n")
+            { $n = 0; [int]::TryParse($_, [ref]$n) } {
+
+                $lineNumber = [int]$_
+                $selectedTodo = $todos[$lineNumber - 1]
+                if (-not $PassThru.IsPresent) {
+                    #TODO Preserve LineNumber from complete TODO list
+                    userPrompt -Screen ($selectedTodo | ConvertTo-TodoString -IncludeLineNumber)
+                } else {
+                    $selectedTodo
+                }
             }
-            {$_ -in 'q','quit','exit'} {
+            { $_ -in 'la', 'ls', 'listall' } { 
+                
+                userPrompt -Screen (($todos | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
+            }
+            { $_ -in 'q', 'quit', 'exit' } {
 
                 break
             }
-            {$_ -in 'h', '?', 'help'} {
+            { $_ -match '^x' } {
+                $lineNumber = 0
+                $userChoiceQualifier = $userChoice -replace '^x'
+                if ([int]::TryParse($userChoiceQualifier, [ref]$lineNumber)) {
+
+                    # TODO Error handling for index out of range.
+                    $selectedTodo = $todos[$lineNumber-1]
+                }
+                else {
+                    $selectedTodo = userPrompt -Screen $Screen -Message "Select the item by its line number" -PassThru
+                }
+                $selectedTodo.Done = -not $selectedTodo.Done
+                userPrompt -Screen (($todos | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
+            }
+            { $_ -in 'h', '?', 'help' } {
                 userPrompt -Screen ($Screen + $helpScreen)
+            }
+            { $_ -in 's', 'save', 'w', 'write' } {
+
+                $todos | Export-Todo -Path $Path
+                userPrompt -Screen $Screen -Message "Todos written to: $path"
             }
             Default {
                 # Invalid choice
@@ -370,5 +423,6 @@ $helpScreen = @"
             }
         }
     }
+    $todos = Import-Todo -Path $Path
     userPrompt -Screen $startScreen
 }
