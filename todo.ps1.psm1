@@ -236,8 +236,9 @@ function ConvertTo-Todo {
                     Hash       = $text | getHash
                     LineNumber = $i++
                 }
+                SpecialKeyValue = @{}
             }
-
+            
             foreach ($key in $Attributes.Keys) {
 
                 $key = $key | assumeUniqueKey -Dictionary $todoObjProperties -PostFix 'attr'
@@ -246,11 +247,19 @@ function ConvertTo-Todo {
 
             $specialKeyValuePairs = $text |
                 selectByPattern -Pattern '[a-zA-z0-9-_]+:[a-zA-z0-9-_]+'
+            if($specialKeyValuePairs) {
+
+                [array]::Reverse($specialKeyValuePairs)
+            }
+            <#
+                The first occurance of a key:value pair should be used,
+                if the same key is used more than once.
+                Example: due:today due:tomorrow => preserved valie: today
+            #>
             foreach ($kvPair in $specialKeyValuePairs) {
 
                 $key, $value = $kvPair -split ':'
-                $key = $key | assumeUniqueKey -Dictionary $todoObjProperties -PostFix 'kv'
-                $todoObjProperties[$key] = $value
+                $todoObjProperties.SpecialKeyValue[$key] = $value
             }
 
             foreach ($key in $SessionData.Keys) {

@@ -106,38 +106,38 @@ Describe 'ConvertTo-Todo' {
             Should Be @('@Home','@Computer')
     }
     It 'adds an additonal attribute for a single key:value expression in the string' {
-        'Start the important things due:today' | 
+        $result = 'Start the important things due:today' | 
             ConvertTo-Todo | 
-            Select-Object -ExpandProperty due | 
+            Select-Object -ExpandProperty SpecialKeyValue
+        $result['due'] |
             Should Be 'today'
     }
     It 'adds additonal attributes for multiple key:value expressions in the string' {
         $result = 'Start the important things due:tomorrow start:today' | 
-            ConvertTo-Todo
-        $result.due,$result.start  | 
+            ConvertTo-Todo |
+            Select-Object -ExpandProperty SpecialKeyValue
+        $result['due'],$result['start']  | 
             Should Be @('tomorrow','today')
     }
-    It 'doesnt overwrite existing attributes for key:value expressions in the string' {
-        'Start the important things CreationDate:today' | 
-            ConvertTo-Todo |
-            Select-Object -ExpandProperty CreationDate_kv |
-            Should Be 'today'
-    }
-    It 'fails to parse string where the same key:value key is used twice' {
-        'Start the important things due:today due:tomorrow' | 
-            ConvertTo-Todo |
-            Should BeNullOrEmpty
+    It 'should add key:value only once, if it appears multiple times' {
+        $result ='Start the important things due:today due:tomorrow' | 
+            ConvertTo-Todo | 
+            Select-Object -ExpandProperty SpecialKeyValue
+            $result['due'] |
+                Should Be 'today'
     }
     It 'does not add a attribute for every colon' {
         $result = 'Start the important things: buy beer' | 
-            ConvertTo-Todo
-        $result.psobject.Properties.Name -contains 'things' | 
+            ConvertTo-Todo | 
+            Select-Object -ExpandProperty SpecialKeyValue
+        $result.Keys -contains 'things' | 
             Should Be $false
     }
     It 'does not accept key::value expressions with double colons' {
         $result = 'Start the important things due::today' | 
-            ConvertTo-Todo
-        $result.psobject.Properties.Name -contains 'due' | 
+            ConvertTo-Todo |
+            Select-Object -ExpandProperty SpecialKeyValue
+        $result.Keys -contains 'due' | 
             Should Be $false
     }
 }
