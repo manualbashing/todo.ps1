@@ -335,7 +335,6 @@ function Remove-TodoProject {
 function Invoke-TodoGui {
 
     [Cmdletbinding()]
-    [Alias('todo')]
     param(
         $Path = $env:TODOPS1_MASTERFILE,
 

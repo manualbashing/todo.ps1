@@ -19,7 +19,6 @@
     FunctionsToExport = '*'
     CmdletsToExport   = '*'
     VariablesToExport = '*'
-    AliasesToExport   = '*'
     # ModuleList = @()
     # FileList = @()
     PrivateData       = @{
