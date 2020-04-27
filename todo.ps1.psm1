@@ -1,4 +1,5 @@
 <#
+    #TODO indicate unsaved changes in Gui
     #TODO Match by Hash not working
     #TODO Write pester tests
     #TODO Write documentation
@@ -360,6 +361,7 @@ Source: $Path
     la, ls, listall    List all
     x[LineNumber]      Toggle Done
     s, w, save, write  Write todos back to source
+    r, reload          Reload todos from source file
     h, ?, help         Help
     q, quit, exit      Quit
 "@
@@ -429,6 +431,11 @@ Source: $Path
 
                 $todos | Export-Todo -Path $Path
                 userPrompt -Screen $Screen -Message "Todos written to: $path"
+            }
+            { $_ -in 'r', 'reload' } {
+
+                $todos = Import-Todo -Path $Path
+                userPrompt -Screen (($todos | ConvertTo-TodoString -IncludeLineNumber) -join "`n") -Message "Todos reloaded from: $path"
             }
             Default {
                 # Invalid choice
