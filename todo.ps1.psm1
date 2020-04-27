@@ -205,7 +205,7 @@ function ConvertTo-Todo {
                 # or priority (A) - (Z) (mutually exclusive)
 
             #>
-            $isValidTodoItem = $line -match (
+            $isValidTodoItem = $line -cmatch (
                 '^(((?<done>x)( (?<completition>[0-9-]{10}))? )|(\((?<priority>[A-Z])\) ))?' +
                 '((?<creation>[0-9-]{10}) )?' +
                 '(?<text>.+)$' # All the rest remains unparsed at this stage
