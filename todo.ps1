@@ -315,3 +315,60 @@ function Remove-TodoProject {
         }
     }
 }
+
+function Invoke-TodoGui {
+
+    [Cmdletbinding()]
+    param(
+        $Path = $env:TODOPS1_MASTERFILE
+    )
+
+$todoPrompt = "`nTODO>"
+$screenHeader = @"
+`n
+Gui:    todo.ps1 simple gui 
+Source: $Path
+Agenda: <none>
+`n
+"@
+
+$startScreen = @"
+    Press "h" for help
+"@
+
+$helpScreen = @"
+`n
+    la, ls, listall    List all
+    h, ?, help         Help
+    q, quit, exit      Quit
+"@
+
+    function userPrompt ($Screen, $Message) {
+        Clear-Host
+        Write-Host ($screenHeader + $Screen)
+        if ($Message) {
+            Write-Host "`n    $Message"
+        }
+        $userChoice = Read-Host -Prompt $todoPrompt
+
+        switch ($userChoice) {
+            {$_ -in 'la','ls','listall'} { 
+                # List all
+                $todos = Import-Todo -Path $Path
+                userPrompt -Screen (($todos | ConvertTo-TodoString) -join "`n")
+            }
+            {$_ -in 'q','quit','exit'} {
+
+                break
+            }
+            {$_ -in 'h', '?', 'help'} {
+                userPrompt -Screen ($Screen + $helpScreen)
+            }
+            Default {
+                # Invalid choice
+                userPrompt -Screen $Screen -Message "Invalid choice: $userChoice. Press 'h' for help"
+            }
+        }
+    }
+    userPrompt -Screen $startScreen
+}
