@@ -31,9 +31,14 @@ filter getHash {
     return $hash
 }
 
-filter selectByPattern ($Pattern) {
-    $_ | Select-String -Pattern $Pattern -AllMatches |
-    ForEach-Object { $_.Matches.Value }
+filter selectByPattern ($Pattern, $MatchGroup=0) {
+
+    $_ | 
+        Select-String -Pattern $Pattern -AllMatches | 
+        Select-Object -ExpandProperty Matches |
+        Select-Object -ExpandProperty Groups |
+        Where-Object Name -eq $MatchGroup | 
+        Select-Object -ExpandProperty Value
 }
 
 filter assumeUniqueKey ($Dictionary, $PostFix) {
@@ -221,8 +226,8 @@ function ConvertTo-Todo {
             $todoObjProperties = [ordered]@{
                 Priority         = $Matches['priority']
                 Text             = $Matches['text']
-                Context          = $text | selectByPattern -Pattern '@[a-zA-z0-9-_]+'
-                Project          = $text | selectByPattern -Pattern '\+[a-zA-z0-9-_]+'
+                Context          = $text | selectByPattern -Pattern ' (@[a-zA-z0-9-_]+)' -MatchGroup 1
+                Project          = $text | selectByPattern -Pattern ' (\+[a-zA-z0-9-_]+)' -MatchGroup 1
                 Done             = [bool]($Matches['done'])
                 CompletitionDate = $Matches['completition']
                 CreationDate     = $Matches['creation']
