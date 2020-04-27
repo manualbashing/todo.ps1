@@ -1,4 +1,8 @@
 <#
+    #TODO Match by Hash not working
+    #TODO Write pester tests
+    #TODO Write documentation
+
     #TODO Implement different sources
 
     - Code files (Search in "#TODO" commentaries)
@@ -12,22 +16,22 @@
 filter getHash {
     <#
         Hashing is used to find duplicate TODOs.
-        
+
         - A duplicate TODO is the same task that might only defer in irrelevant ways:
-            
+
             - Different Priority, CreationDate, CompletitionData
             - Difference in case or whitespaces
     #>
     $hasher = New-Object System.Security.Cryptography.SHA1Managed
     $InputString = $_ -replace '\s'
     $InputString = $InputString.toLower()
-    $bytes = [System.Text.Encoding]::UTF8.GetBytes($InputString) 
-    $hash = $hasher.ComputeHash($bytes) -join '' 
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($InputString)
+    $hash = $hasher.ComputeHash($bytes) -join ''
     return $hash
 }
 
 filter selectByPattern ($Pattern) {
-    $_ | Select-String -Pattern $Pattern -AllMatches | 
+    $_ | Select-String -Pattern $Pattern -AllMatches |
     ForEach-Object { $_.Matches.Value }
 }
 
@@ -37,7 +41,7 @@ filter assumeUniqueKey ($Dictionary, $PostFix) {
         $key = "${key}_$PostFix"
     }
     Write-Output $key
-} 
+}
 
 filter assumePathExists {
 
@@ -45,7 +49,7 @@ filter assumePathExists {
 
         New-Item $_ -Force
     } else {
-        
+
         Get-Item $_
     }
 }
@@ -105,8 +109,8 @@ function Export-Todo {
             }
 
             # Todo has a different origin or is not on the same line anymore.
-            $firstTodoMatchedByHash = $targetTodos | 
-                Where-Object { $_.SessionData.Hash -eq $sessTodo.SessionData.Hash } | 
+            $firstTodoMatchedByHash = $targetTodos |
+                Where-Object { $_.SessionData.Hash -eq $sessTodo.SessionData.Hash } |
                 Select-Object -First 1
             if ($firstTodoMatchedByHash) {
 
@@ -121,8 +125,8 @@ function Export-Todo {
         }
     }
     End {
-        $targetTodos | 
-            ConvertTo-TodoString | 
+        $targetTodos |
+            ConvertTo-TodoString |
             Out-File -Encoding utf8 -FilePath $Path
     }
 }
@@ -152,7 +156,7 @@ function ConvertTo-TodoString {
                 $result += ($todo.CompletitionDate + " ")
             }
             if ($pri = $todo.Priority) {
-                $result += "($pri) " 
+                $result += "($pri) "
             }
             if ($todo.CreationDate) {
                 $result += ($todo.CreationDate + " ")
@@ -163,7 +167,7 @@ function ConvertTo-TodoString {
             Write-Output $result
             $ln = $ln + 1
         }
-        
+
     }
 }
 
@@ -202,8 +206,8 @@ function ConvertTo-Todo {
 
             #>
             $isValidTodoItem = $line -match (
-                '^(((?<done>x)( (?<completition>[0-9-]{10}))? )|(\((?<priority>[A-Z])\) ))?' + 
-                '((?<creation>[0-9-]{10}) )?' + 
+                '^(((?<done>x)( (?<completition>[0-9-]{10}))? )|(\((?<priority>[A-Z])\) ))?' +
+                '((?<creation>[0-9-]{10}) )?' +
                 '(?<text>.+)$' # All the rest remains unparsed at this stage
             )
             $text = $Matches['text']
@@ -234,7 +238,7 @@ function ConvertTo-Todo {
                 $todoObjProperties[$key] = $Attributes[$key]
             }
 
-            $specialKeyValuePairs = $text | 
+            $specialKeyValuePairs = $text |
                 selectByPattern -Pattern '[a-zA-z0-9-_]+:[a-zA-z0-9-_]+'
             foreach ($kvPair in $specialKeyValuePairs) {
 
@@ -249,7 +253,7 @@ function ConvertTo-Todo {
                 $todoObjProperties.SessionData[$key] = $SessionData[$key]
             }
 
-            [pscustomobject]$todoObjProperties 
+            [pscustomobject]$todoObjProperties
         }
     }
 }
@@ -268,7 +272,7 @@ function Add-TodoProject {
     Begin {
 
         $normalizedProjectNames = foreach ($projectName in $Project) {
-            
+
             if ($projectName -notmatch '^\+') {
                 "+$projectName"
             } else {
@@ -277,14 +281,14 @@ function Add-TodoProject {
         }
     }
     Process {
-        
+
         foreach ($todo in $InputObject) {
 
-            $removableProjects = $normalizedProjectNames | 
+            $removableProjects = $normalizedProjectNames |
                 Where-Object { $_ -NotIn $todo.Project }
             $todo.Project = @($todo.Project) + @($removableProjects)
             foreach ($removableProjectName in $removableProjects) {
-                
+
                 $todo.Text += " $removableProjectName"
             }
         }
@@ -305,7 +309,7 @@ function Remove-TodoProject {
     Begin {
 
         $normalizedProjectNames = foreach ($projectName in $Project) {
-            
+
             if ($projectName -notmatch '^\+') {
                 "+$projectName"
             } else {
@@ -314,14 +318,14 @@ function Remove-TodoProject {
         }
     }
     Process {
-        
+
         foreach ($todo in $InputObject) {
 
-            $removableProjects = $normalizedProjectNames | 
+            $removableProjects = $normalizedProjectNames |
                 Where-Object { $_ -In $todo.Project }
             $todo.Project = $todo.Project | Where-Object { $_ -notin $removableProjects }
             foreach ($removableProjectName in $removableProjects) {
-                
+
                 $todo.Text = $todo.Text -replace [regex]::Escape(" $removableProjectName")
             }
         }
@@ -331,16 +335,20 @@ function Remove-TodoProject {
 function Invoke-TodoGui {
 
     [Cmdletbinding()]
+    [Alias('todo')]
     param(
-        $Path = $env:TODOPS1_MASTERFILE
+        $Path = $env:TODOPS1_MASTERFILE,
+
+        [parameter(Position=0)]
+        [string]
+        $Command=''
     )
 
     $todoPrompt = "`nTODO>"
     $screenHeader = @"
 `n
-Gui:    todo.ps1 simple gui 
+Gui:    todo.ps1 simple gui
 Source: $Path
-Agenda: <none>
 `n
 "@
 
@@ -360,11 +368,14 @@ Agenda: <none>
     function userPrompt {
         param (
             [string]
-            $Screen, 
-            
+            $Screen,
+
             [string]
             $Message,
-            
+
+            [string]
+            $Command='',
+
             [switch]
             $PassThru
         )
@@ -373,9 +384,12 @@ Agenda: <none>
         if ($Message) {
             Write-Host "`n    $Message"
         }
-        $userChoice = Read-Host -Prompt $todoPrompt
+        if ($Command -eq '') {
+            $Command = Read-Host -Prompt $todoPrompt
+        }
 
-        switch ($userChoice) {
+
+        switch ($Command) {
             { $n = 0; [int]::TryParse($_, [ref]$n) } {
 
                 $lineNumber = [int]$_
@@ -387,8 +401,8 @@ Agenda: <none>
                     $selectedTodo
                 }
             }
-            { $_ -in 'la', 'ls', 'listall' } { 
-                
+            { $_ -in 'la', 'ls', 'listall' } {
+
                 userPrompt -Screen (($todos | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
             }
             { $_ -in 'q', 'quit', 'exit' } {
@@ -397,7 +411,7 @@ Agenda: <none>
             }
             { $_ -match '^x' } {
                 $lineNumber = 0
-                $userChoiceQualifier = $userChoice -replace '^x'
+                $userChoiceQualifier = $Command -replace '^x'
                 if ([int]::TryParse($userChoiceQualifier, [ref]$lineNumber)) {
 
                     # TODO Error handling for index out of range.
@@ -419,10 +433,12 @@ Agenda: <none>
             }
             Default {
                 # Invalid choice
-                userPrompt -Screen $Screen -Message "Invalid choice: $userChoice. Press 'h' for help"
+                userPrompt -Screen $Screen -Message "Invalid choice: $Command. Press 'h' for help"
             }
         }
     }
     $todos = Import-Todo -Path $Path
-    userPrompt -Screen $startScreen
+    userPrompt -Screen $startScreen -Command $Command
 }
+
+Export-ModuleMember -Function *-*
