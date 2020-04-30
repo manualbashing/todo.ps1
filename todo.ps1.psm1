@@ -352,12 +352,12 @@ function New-TodoGui {
     [Cmdletbinding()]
     param(
         $Path = $env:TODOPS1_MASTERFILE,
-        $GuiTypeName = 'ConsoleGui'
+        $GuiName = 'Console'
     )
 
     #TODO make sure, Gui class exists.
-    . $PSScriptRoot/gui/$GuiTypeName.ps1
-    $gui = Invoke-Expression "[$GuiTypeName]::New('$Path')"
+    . $PSScriptRoot/gui/$GuiName/${GuiName}Gui.ps1
+    $gui = Invoke-Expression "[$($GuiName)Gui]::New('$Path')"
     return $gui
 }
 function Invoke-TodoGuiCommand {

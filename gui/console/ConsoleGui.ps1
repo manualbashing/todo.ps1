@@ -26,16 +26,17 @@ class ConsoleGui {
         
         $this.Name = "todo.ps1 simple gui"
         $this.Path = $Path
-        $this.LoadScreens("$PSScriptRoot\console")
+        $this.LoadScreens("$PSScriptRoot")
         $this.Screen['HeaderScreen'].SetPath($this.Path)
         $this.ImportTodos($this.Path)
     }
     [void]LoadScreens([string]$ScreenPath) {
 
         $screenTable = @{ }
-        foreach ($screenFile in (Get-ChildItem $ScreenPath)) {
-            . $screenFile.FullName
-            $screenName = $screenFile | Select-Object -ExpandProperty BaseName
+        $screenFiles = (Get-ChildItem $ScreenPath | Where-Object BaseName -like "*Screen")
+        foreach ($file in $screenFiles) {
+            . $file.FullName
+            $screenName = $file | Select-Object -ExpandProperty BaseName
             $screenTable[$screenName] = Invoke-Expression "[$screenName]::new()"
         }
         $this.Screen = $screenTable
