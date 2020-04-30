@@ -2,10 +2,13 @@ class HeaderView {
 
     [string]$Name
     [string]$Path
+    [ConsoleGui]$Gui
     
-    HeaderView() {
+    HeaderView([ConsoleGui]$Gui) {
+
         $this.Path = ''
         $this.Name = 'todo.ps1 simple gui'
+        $this.Gui = $Gui
     }
     #@Override
     [string]ToString() {

@@ -1,6 +1,10 @@
 class StartView {
 
-    StartView() { 
+    [ConsoleGui]$Gui
+
+    StartView([ConsoleGui]$Gui) { 
+
+        $this.Gui = $Gui
     }
 
     #@Override

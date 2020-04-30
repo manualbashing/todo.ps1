@@ -5,7 +5,7 @@
 @{
 
     RootModule        = 'todo.ps1.psm1'
-    ModuleVersion     = '0.0.1'
+    ModuleVersion     = '0.0.2'
     CompatiblePSEditions = @('5.1')
     GUID              = '51bf6428-39f4-4af9-b477-5f15a7a2dc04'
     Author            = 'Manuel Batsching <m.batsching@outlook.com>'

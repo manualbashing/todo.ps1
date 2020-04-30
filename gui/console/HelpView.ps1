@@ -1,6 +1,9 @@
 class HelpView {
+    [ConsoleGui]$Gui
 
-    HelpView() { 
+    HelpView([ConsoleGui]$Gui) {
+
+        $this.Gui = $Gui
     }
 
     #@Override

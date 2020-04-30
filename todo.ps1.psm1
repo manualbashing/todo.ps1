@@ -347,7 +347,7 @@ function Remove-TodoProject {
     }
 }
 
-function New-TodoGui {
+function New-ConsoleGui {
 
     [Cmdletbinding()]
     param(
@@ -360,7 +360,7 @@ function New-TodoGui {
     $gui = Invoke-Expression "[$($GuiName)Gui]::New('$Path')"
     return $gui
 }
-function Invoke-TodoGuiCommand {
+function Invoke-ConsoleGuiCommand {
 
     [Cmdletbinding()]
     param(
@@ -371,16 +371,16 @@ function Invoke-TodoGuiCommand {
 
         [Parameter(Mandatory=$false)]
         [psobject]
-        $TodoGui = (New-TodoGui)
+        $ConsoleGui = (New-ConsoleGui)
     )
     
-    $gui = $TodoGui
+    $gui = $ConsoleGui
 
     switch ($Command) {
         'start' {
-            $gui.WriteView($gui.GetGuiView('StartView'))
+            $gui.WriteView($gui.GetView('StartView'))
             $command = $gui.GetUserCommand()
-            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
         }
         { $gui._tryParseInteger($_) } {
 
@@ -388,14 +388,14 @@ function Invoke-TodoGuiCommand {
             $selectedTodo = $gui.Todos[$lineNumber - 1]
             $gui.WriteView($gui.GetTodoList($selectedTodo))
             $command = $gui.GetUserCommand()
-            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
 
         }
         { $_ -in 'la', 'ls', 'listall' } {
 
             $gui.WriteView($gui.GetTodoList())
             $command = $gui.GetUserCommand()
-            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
         }
         { $_ -in 'q', 'quit', 'exit' } {
 
@@ -420,13 +420,13 @@ function Invoke-TodoGuiCommand {
             $selectedTodo.Done = -not $selectedTodo.Done
             $gui.WriteView($gui.GetTodoList())
             $command = $gui.GetUserCommand()
-            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
         }
         { $_ -in 'h', '?', 'help' } {
 
-            $gui.WriteView($gui.GetGuiView('HelpView'))
+            $gui.WriteView($gui.GetView('HelpView'))
             $command = $gui.GetUserCommand()
-            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
         }
         { $_ -in 's', 'save', 'w', 'write' } {
 
@@ -435,7 +435,7 @@ function Invoke-TodoGuiCommand {
             $gui.WriteView($gui.GetTodoList())
             $gui.WriteNotification("Todos written to: $($gui.Path)")
             $command = $gui.GetUserCommand()
-            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
         }
         { $_ -in 'r', 'reload' } {
 
@@ -443,13 +443,13 @@ function Invoke-TodoGuiCommand {
             $gui.WriteView($gui.GetTodoList())
             $gui.WriteNotification("Todos reloaded from: $($gui.Path)")
             $command = $gui.GetUserCommand()
-            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
         }
         Default {
             $gui.WriteView($gui.GetTodoList())
             $gui.WriteNotification("Invalid choice: $Command. Press 'h' for help")
             $command = $gui.GetUserCommand()
-            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
         }
     }
 }

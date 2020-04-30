@@ -3,7 +3,7 @@ class ConsoleGui {
     [string]$Name
     [string]$Path
     [psobject[]]$Todos
-    [Hashtable]$View
+    [Hashtable]$ViewMap
     <#
         TODO: Define commands in a dynamical way
 
@@ -26,20 +26,21 @@ class ConsoleGui {
         
         $this.Name = "todo.ps1 simple gui"
         $this.Path = $Path
-        $this.LoadViews("$PSScriptRoot")
-        $this.View['HeaderView'].SetPath($this.Path)
+        $this.LoadViewMap()
+        $this.ViewMap['HeaderView'].SetPath($this.Path)
         $this.ImportTodos($this.Path)
     }
-    [void]LoadViews([string]$ViewPath) {
+    [void]LoadViewMap() {
 
-        $ViewTable = @{ }
-        $ViewFiles = (Get-ChildItem $ViewPath | Where-Object BaseName -like "*View")
-        foreach ($file in $ViewFiles) {
+        # Loads all views that are defined in /gui/Console
+        $this.ViewMap = @{}
+        $viewFiles = (Get-ChildItem $PSScriptRoot | Where-Object BaseName -match 'View$')
+        foreach ($file in $viewFiles) {
             . $file.FullName
-            $ViewName = $file | Select-Object -ExpandProperty BaseName
-            $ViewTable[$ViewName] = Invoke-Expression "[$ViewName]::new()"
+            $viewName = $file | Select-Object -ExpandProperty BaseName
+            $view = Invoke-Expression "[$viewName]"
+            $this.ViewMap[$viewName] =  $view::new($this)
         }
-        $this.View = $ViewTable
     }
     [void]ExportTodos() {
 
@@ -57,9 +58,9 @@ class ConsoleGui {
 
         $this.Todos = Import-Todo -Path $Path
     }
-    [psobject]GetGuiView($ViewName) {
+    [psobject]GetView($ViewName) {
         #TODO Test if View name exists.
-        return $this.View[$ViewName]
+        return $this.ViewMap[$ViewName]
     }
     [string]GetTodoList() {
 
@@ -72,7 +73,7 @@ class ConsoleGui {
     [void]WriteView([psobject]$View) {
         
         Clear-Host
-        Write-Host $this.View['HeaderView']
+        Write-Host $this.ViewMap['HeaderView']
         Write-Host $View
     }
     [void]WriteNotification([string]$Message) {
