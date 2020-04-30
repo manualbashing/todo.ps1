@@ -62,14 +62,6 @@ class ConsoleGui {
         #TODO Test if View name exists.
         return $this.ViewMap[$ViewName]
     }
-    [string]GetTodoList() {
-
-        return (($this.Todos | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
-    }
-    [string]GetTodoList([psobject]$CustomTodoList) {
-        #TODO allow multiple entries
-        return (($CustomTodoList | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
-    }
     [void]WriteView([psobject]$View) {
         
         Clear-Host
@@ -90,7 +82,7 @@ class ConsoleGui {
         $inputIsValid = $this._tryParseInteger($selection)
         if (-not $inputIsValid) {
 
-            $this.WriteView($this.GetTodoList())
+            $this.WriteView($this.GetView('TodoListView'))
             $this.WriteNotification("Not a valid selection: $selection")
             return ($this.GetUserSelection())
         } else {
