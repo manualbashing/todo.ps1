@@ -347,15 +347,111 @@ function Remove-TodoProject {
     }
 }
 
-function Invoke-ConsoleGui {
+function New-TodoGui {
 
     [Cmdletbinding()]
     param(
-        $Path = $env:TODOPS1_MASTERFILE
+        $Path = $env:TODOPS1_MASTERFILE,
+        $GuiTypeName = 'ConsoleGui'
     )
-    . $PSScriptRoot/gui/ConsoleGui.ps1
-    $gui = [ConsoleGui]::New($Path)
-    $gui.StartGui()
+
+    #TODO make sure, Gui class exists.
+    . $PSScriptRoot/gui/$GuiTypeName.ps1
+    $gui = Invoke-Expression "[$GuiTypeName]::New('$Path')"
+    return $gui
+}
+function Invoke-TodoGuiCommand {
+
+    [Cmdletbinding()]
+    param(
+
+        [Parameter(Mandatory=$false,Position=0)]
+        [string]
+        $Command = 'start',
+
+        [Parameter(Mandatory=$false)]
+        [psobject]
+        $TodoGui = (New-TodoGui)
+    )
+    
+    $gui = $TodoGui
+
+    switch ($Command) {
+        'start' {
+            $gui.WriteScreen($gui.GetGuiScreen('StartScreen'))
+            $command = $gui.GetUserCommand()
+            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+        }
+        { $gui._tryParseInteger($_) } {
+
+            $lineNumber = [int]$_
+            $selectedTodo = $gui.Todos[$lineNumber - 1]
+            $gui.WriteScreen($gui.GetTodoList($selectedTodo))
+            $command = $gui.GetUserCommand()
+            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+
+        }
+        { $_ -in 'la', 'ls', 'listall' } {
+
+            $gui.WriteScreen($gui.GetTodoList())
+            $command = $gui.GetUserCommand()
+            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+        }
+        { $_ -in 'q', 'quit', 'exit' } {
+
+            break
+        }
+        { $_ -match '^x' } {
+            
+            $userChoiceQualifier = $Command -replace '^x'
+            $lineNumber = 0
+            if ([int]::TryParse($userChoiceQualifier, [ref]$lineNumber)) {
+
+                $selectedTodo = $gui.SelectTodo($lineNumber)
+
+            } else {
+
+                $gui.WriteScreen($gui.GetTodoList())
+                $gui.WriteNotification("Select the item by its line number")
+                $lineNumber = $gui.GetUserSelection()
+                $selectedTodo = $gui.SelectTodo($lineNumber)
+            }
+            #TODO Keep track of user commands for undo option.
+            $selectedTodo.Done = -not $selectedTodo.Done
+            $gui.WriteScreen($gui.GetTodoList())
+            $command = $gui.GetUserCommand()
+            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+        }
+        { $_ -in 'h', '?', 'help' } {
+
+            $gui.WriteScreen($gui.GetGuiScreen('HelpScreen'))
+            $command = $gui.GetUserCommand()
+            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+        }
+        { $_ -in 's', 'save', 'w', 'write' } {
+
+            #TODO Track Screens (LastScreen)
+            $gui.ExportTodos()
+            $gui.WriteScreen($gui.GetTodoList())
+            $gui.WriteNotification("Todos written to: $($gui.Path)")
+            $command = $gui.GetUserCommand()
+            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+        }
+        { $_ -in 'r', 'reload' } {
+
+            $gui.ImportTodos($gui.Path)
+            $gui.WriteScreen($gui.GetTodoList())
+            $gui.WriteNotification("Todos reloaded from: $($gui.Path)")
+            $command = $gui.GetUserCommand()
+            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+        }
+        Default {
+            $gui.WriteScreen($gui.GetTodoList())
+            $gui.WriteNotification("Invalid choice: $Command. Press 'h' for help")
+            $command = $gui.GetUserCommand()
+            Invoke-TodoGuiCommand -Command $command -TodoGui $gui
+        }
+    }
 }
 
 Export-ModuleMember -Function *-*

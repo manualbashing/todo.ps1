@@ -74,11 +74,6 @@ class ConsoleGui {
         Write-Host $this.Screen['HeaderScreen']
         Write-Host $Screen
     }
-    [void]StartGui() {
-        # TODO check if this method is necessary
-        $startScreen = $this.GetGuiScreen('StartScreen')
-        $this.ExecuteUserCommand($startScreen)
-    }
     [void]WriteNotification([string]$Message) {
         
         Write-Host "`n    $Message`n"
@@ -108,79 +103,5 @@ class ConsoleGui {
         $selectedTodo = $this.Todos[$LineNumber - 1]
 
         return $selectedTodo
-    }
-    [void]ExecuteUserCommand($Command) {
-        #TODO ExecuteUserCommand should be Invoke-TodoGui
-        switch ($Command) {
-            { $this._tryParseInteger($_) } {
-
-                $lineNumber = [int]$_
-                $selectedTodo = $this.Todos[$lineNumber - 1]
-                $this.WriteScreen($this.GetTodoList($selectedTodo))
-                $command = $this.GetUserCommand()
-                $this.ExecuteUserCommand($command)
-
-            }
-            { $_ -in 'la', 'ls', 'listall' } {
-
-                $this.WriteScreen($this.GetTodoList())
-                $command = $this.GetUserCommand()
-                $this.ExecuteUserCommand($command)
-            }
-            { $_ -in 'q', 'quit', 'exit' } {
-
-                break
-            }
-            { $_ -match '^x' } {
-                
-                $userChoiceQualifier = $Command -replace '^x'
-                $lineNumber = 0
-                if ([int]::TryParse($userChoiceQualifier, [ref]$lineNumber)) {
-
-                    $selectedTodo = $this.SelectTodo($lineNumber)
-
-                } else {
-
-                    $this.WriteScreen($this.GetTodoList())
-                    $this.WriteNotification("Select the item by its line number")
-                    $lineNumber = $this.GetUserSelection()
-                    $selectedTodo = $this.SelectTodo($lineNumber)
-                }
-                #TODO Keep track of user commands for undo option.
-                $selectedTodo.Done = -not $selectedTodo.Done
-                $this.WriteScreen($this.GetTodoList())
-                $command = $this.GetUserCommand()
-                $this.ExecuteUserCommand($command)
-            }
-            { $_ -in 'h', '?', 'help' } {
-
-                $this.WriteScreen($this.GetGuiScreen('HelpScreen'))
-                $command = $this.GetUserCommand()
-                $this.ExecuteUserCommand($command)
-            }
-            { $_ -in 's', 'save', 'w', 'write' } {
-
-                #TODO Track Screens (LastScreen)
-                $this.ExportTodos()
-                $this.WriteScreen($this.GetTodoList())
-                $this.WriteNotification("Todos written to: $($this.Path)")
-                $command = $this.GetUserCommand()
-                $this.ExecuteUserCommand($command)
-            }
-            { $_ -in 'r', 'reload' } {
-
-                $this.ImportTodos($this.Path)
-                $this.WriteScreen($this.GetTodoList())
-                $this.WriteNotification("Todos reloaded from: $($this.Path)")
-                $command = $this.GetUserCommand()
-                $this.ExecuteUserCommand($command)
-            }
-            Default {
-                $this.WriteScreen($this.GetTodoList())
-                $this.WriteNotification("Invalid choice: $Command. Press 'h' for help")
-                $command = $this.GetUserCommand()
-                $this.ExecuteUserCommand($command)
-            }
-        }
     }
 }
