@@ -28,7 +28,6 @@ class ConsoleGui {
         $this.Path = $Path
         $this.LoadViewMap()
         $this.ViewMap['HeaderView'].SetPath($this.Path)
-        $this.ImportTodos($this.Path)
     }
     [void]LoadViewMap() {
 
@@ -42,21 +41,9 @@ class ConsoleGui {
             $this.ViewMap[$viewName] =  $view::new($this)
         }
     }
-    [void]ExportTodos() {
+    [void]SetTodos([psobject[]]$Todos) {
 
-        $this.ExportTodos($this.Path)
-    }
-    [void]ExportTodos([string]$Path) {
-
-        $this.Todos | Export-Todo -Path $Path
-    }
-    [psobject[]]ImportTodos() {
-
-        return ($this.ImportTodos($this.Path))
-    }
-    [void]ImportTodos([string]$Path) {
-
-        $this.Todos = Import-Todo -Path $Path
+        $this.Todos = $Todos
     }
     [psobject]GetView($ViewName) {
         #TODO Test if View name exists.
@@ -89,13 +76,5 @@ class ConsoleGui {
             #TODO implement "cancel operation"
             return [int]$selection
         }
-    }
-    [psobject]SelectTodo([int]$LineNumber) {
-
-        #TODO allow selection of multiple items
-        #TODO Handle index out of range
-        $selectedTodo = $this.Todos[$LineNumber - 1]
-
-        return $selectedTodo
     }
 }
