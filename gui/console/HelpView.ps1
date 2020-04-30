@@ -1,6 +1,6 @@
-class HelpScreen {
+class HelpView {
 
-    HelpScreen() { 
+    HelpView() { 
     }
 
     #@Override
@@ -12,7 +12,7 @@ class HelpScreen {
     s, w, save, write  Write todos back to source
     r, reload          Reload todos from source file
     h, ?, help         Help
-    start              Show start screen
+    start              Show start View
     q, quit, exit      Quit
 "@
     }

@@ -3,7 +3,7 @@ class ConsoleGui {
     [string]$Name
     [string]$Path
     [psobject[]]$Todos
-    [Hashtable]$Screen
+    [Hashtable]$View
     <#
         TODO: Define commands in a dynamical way
 
@@ -26,20 +26,20 @@ class ConsoleGui {
         
         $this.Name = "todo.ps1 simple gui"
         $this.Path = $Path
-        $this.LoadScreens("$PSScriptRoot")
-        $this.Screen['HeaderScreen'].SetPath($this.Path)
+        $this.LoadViews("$PSScriptRoot")
+        $this.View['HeaderView'].SetPath($this.Path)
         $this.ImportTodos($this.Path)
     }
-    [void]LoadScreens([string]$ScreenPath) {
+    [void]LoadViews([string]$ViewPath) {
 
-        $screenTable = @{ }
-        $screenFiles = (Get-ChildItem $ScreenPath | Where-Object BaseName -like "*Screen")
-        foreach ($file in $screenFiles) {
+        $ViewTable = @{ }
+        $ViewFiles = (Get-ChildItem $ViewPath | Where-Object BaseName -like "*View")
+        foreach ($file in $ViewFiles) {
             . $file.FullName
-            $screenName = $file | Select-Object -ExpandProperty BaseName
-            $screenTable[$screenName] = Invoke-Expression "[$screenName]::new()"
+            $ViewName = $file | Select-Object -ExpandProperty BaseName
+            $ViewTable[$ViewName] = Invoke-Expression "[$ViewName]::new()"
         }
-        $this.Screen = $screenTable
+        $this.View = $ViewTable
     }
     [void]ExportTodos() {
 
@@ -57,9 +57,9 @@ class ConsoleGui {
 
         $this.Todos = Import-Todo -Path $Path
     }
-    [psobject]GetGuiScreen($ScreenName) {
-        #TODO Test if screen name exists.
-        return $this.Screen[$ScreenName]
+    [psobject]GetGuiView($ViewName) {
+        #TODO Test if View name exists.
+        return $this.View[$ViewName]
     }
     [string]GetTodoList() {
 
@@ -69,11 +69,11 @@ class ConsoleGui {
         #TODO allow multiple entries
         return (($CustomTodoList | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
     }
-    [void]WriteScreen([psobject]$Screen) {
+    [void]WriteView([psobject]$View) {
         
         Clear-Host
-        Write-Host $this.Screen['HeaderScreen']
-        Write-Host $Screen
+        Write-Host $this.View['HeaderView']
+        Write-Host $View
     }
     [void]WriteNotification([string]$Message) {
         
@@ -89,7 +89,7 @@ class ConsoleGui {
         $inputIsValid = $this._tryParseInteger($selection)
         if (-not $inputIsValid) {
 
-            $this.WriteScreen($this.GetTodoList())
+            $this.WriteView($this.GetTodoList())
             $this.WriteNotification("Not a valid selection: $selection")
             return ($this.GetUserSelection())
         } else {

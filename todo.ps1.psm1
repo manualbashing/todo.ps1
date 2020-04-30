@@ -378,7 +378,7 @@ function Invoke-TodoGuiCommand {
 
     switch ($Command) {
         'start' {
-            $gui.WriteScreen($gui.GetGuiScreen('StartScreen'))
+            $gui.WriteView($gui.GetGuiView('StartView'))
             $command = $gui.GetUserCommand()
             Invoke-TodoGuiCommand -Command $command -TodoGui $gui
         }
@@ -386,14 +386,14 @@ function Invoke-TodoGuiCommand {
 
             $lineNumber = [int]$_
             $selectedTodo = $gui.Todos[$lineNumber - 1]
-            $gui.WriteScreen($gui.GetTodoList($selectedTodo))
+            $gui.WriteView($gui.GetTodoList($selectedTodo))
             $command = $gui.GetUserCommand()
             Invoke-TodoGuiCommand -Command $command -TodoGui $gui
 
         }
         { $_ -in 'la', 'ls', 'listall' } {
 
-            $gui.WriteScreen($gui.GetTodoList())
+            $gui.WriteView($gui.GetTodoList())
             $command = $gui.GetUserCommand()
             Invoke-TodoGuiCommand -Command $command -TodoGui $gui
         }
@@ -411,28 +411,28 @@ function Invoke-TodoGuiCommand {
 
             } else {
 
-                $gui.WriteScreen($gui.GetTodoList())
+                $gui.WriteView($gui.GetTodoList())
                 $gui.WriteNotification("Select the item by its line number")
                 $lineNumber = $gui.GetUserSelection()
                 $selectedTodo = $gui.SelectTodo($lineNumber)
             }
             #TODO Keep track of user commands for undo option.
             $selectedTodo.Done = -not $selectedTodo.Done
-            $gui.WriteScreen($gui.GetTodoList())
+            $gui.WriteView($gui.GetTodoList())
             $command = $gui.GetUserCommand()
             Invoke-TodoGuiCommand -Command $command -TodoGui $gui
         }
         { $_ -in 'h', '?', 'help' } {
 
-            $gui.WriteScreen($gui.GetGuiScreen('HelpScreen'))
+            $gui.WriteView($gui.GetGuiView('HelpView'))
             $command = $gui.GetUserCommand()
             Invoke-TodoGuiCommand -Command $command -TodoGui $gui
         }
         { $_ -in 's', 'save', 'w', 'write' } {
 
-            #TODO Track Screens (LastScreen)
+            #TODO Track Views (LastView)
             $gui.ExportTodos()
-            $gui.WriteScreen($gui.GetTodoList())
+            $gui.WriteView($gui.GetTodoList())
             $gui.WriteNotification("Todos written to: $($gui.Path)")
             $command = $gui.GetUserCommand()
             Invoke-TodoGuiCommand -Command $command -TodoGui $gui
@@ -440,13 +440,13 @@ function Invoke-TodoGuiCommand {
         { $_ -in 'r', 'reload' } {
 
             $gui.ImportTodos($gui.Path)
-            $gui.WriteScreen($gui.GetTodoList())
+            $gui.WriteView($gui.GetTodoList())
             $gui.WriteNotification("Todos reloaded from: $($gui.Path)")
             $command = $gui.GetUserCommand()
             Invoke-TodoGuiCommand -Command $command -TodoGui $gui
         }
         Default {
-            $gui.WriteScreen($gui.GetTodoList())
+            $gui.WriteView($gui.GetTodoList())
             $gui.WriteNotification("Invalid choice: $Command. Press 'h' for help")
             $command = $gui.GetUserCommand()
             Invoke-TodoGuiCommand -Command $command -TodoGui $gui

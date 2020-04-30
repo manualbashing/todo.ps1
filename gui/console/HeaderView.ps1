@@ -1,9 +1,9 @@
-class HeaderScreen {
+class HeaderView {
 
     [string]$Name
     [string]$Path
     
-    HeaderScreen() {
+    HeaderView() {
         $this.Path = ''
         $this.Name = 'todo.ps1 simple gui'
     }

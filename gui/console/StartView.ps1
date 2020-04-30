@@ -1,6 +1,6 @@
-class StartScreen {
+class StartView {
 
-    StartScreen() { 
+    StartView() { 
     }
 
     #@Override
