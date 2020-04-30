@@ -146,14 +146,11 @@ function ConvertTo-TodoString {
         [switch]
         $IncludeLineNumber
     )
-    Begin {
-        $ln = 1
-    }
     Process {
         foreach ($todo in $InputObject) {
             $result = ''
             if ($IncludeLineNumber.IsPresent) {
-                $result = "$ln. "
+                $result = "$($todo.SessionData.LineNumber). "
             }
             if ($todo.Done) {
                 $result += 'x '
@@ -171,7 +168,6 @@ function ConvertTo-TodoString {
                 $result += $todo.Text
             }
             Write-Output $result
-            $ln = $ln + 1
         }
 
     }
@@ -386,7 +382,7 @@ function Invoke-ConsoleGuiCommand {
         { $gui._tryParseInteger($_) } {
 
             $lineNumber = [int]$_
-            $selectedTodo = $gui.Todos[$lineNumber - 1]
+            $selectedTodo = $gui.Todos | Where-Object { $_.SessionData.LineNumber -in $LineNumber }
             $todoListView = $gui.GetView('TodoListView')
             $gui.WriteView($todoListView.ListTodo($selectedTodo))
             $command = $gui.GetUserCommand()
