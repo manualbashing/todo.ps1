@@ -347,118 +347,15 @@ function Remove-TodoProject {
     }
 }
 
-function Invoke-TodoGui {
+function Invoke-ConsoleGui {
 
     [Cmdletbinding()]
     param(
-        $Path = $env:TODOPS1_MASTERFILE,
-
-        [parameter(Position=0)]
-        [string]
-        $Command=''
+        $Path = $env:TODOPS1_MASTERFILE
     )
-
-    $todoPrompt = "`nTODO>"
-    $screenHeader = @"
-`n
-Gui:    todo.ps1 simple gui
-Source: $Path
-`n
-"@
-
-    $startScreen = @"
-    Press "h" for help
-"@
-
-    $helpScreen = @"
-`n
-    la, ls, listall    List all
-    x[LineNumber]      Toggle Done
-    s, w, save, write  Write todos back to source
-    r, reload          Reload todos from source file
-    h, ?, help         Help
-    q, quit, exit      Quit
-"@
-
-    function userPrompt {
-        param (
-            [string]
-            $Screen,
-
-            [string]
-            $Message,
-
-            [string]
-            $Command='',
-
-            [switch]
-            $PassThru
-        )
-        Clear-Host
-        Write-Host ($screenHeader + $Screen)
-        if ($Message) {
-            Write-Host "`n    $Message"
-        }
-        if ($Command -eq '') {
-            $Command = Read-Host -Prompt $todoPrompt
-        }
-
-
-        switch ($Command) {
-            { $n = 0; [int]::TryParse($_, [ref]$n) } {
-
-                $lineNumber = [int]$_
-                $selectedTodo = $todos[$lineNumber - 1]
-                if (-not $PassThru.IsPresent) {
-                    #TODO Preserve LineNumber from complete TODO list
-                    userPrompt -Screen ($selectedTodo | ConvertTo-TodoString -IncludeLineNumber)
-                } else {
-                    $selectedTodo
-                }
-            }
-            { $_ -in 'la', 'ls', 'listall' } {
-
-                userPrompt -Screen (($todos | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
-            }
-            { $_ -in 'q', 'quit', 'exit' } {
-
-                break
-            }
-            { $_ -match '^x' } {
-                $lineNumber = 0
-                $userChoiceQualifier = $Command -replace '^x'
-                if ([int]::TryParse($userChoiceQualifier, [ref]$lineNumber)) {
-
-                    # TODO Error handling for index out of range.
-                    $selectedTodo = $todos[$lineNumber-1]
-                }
-                else {
-                    $selectedTodo = userPrompt -Screen $Screen -Message "Select the item by its line number" -PassThru
-                }
-                $selectedTodo.Done = -not $selectedTodo.Done
-                userPrompt -Screen (($todos | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
-            }
-            { $_ -in 'h', '?', 'help' } {
-                userPrompt -Screen ($Screen + $helpScreen)
-            }
-            { $_ -in 's', 'save', 'w', 'write' } {
-
-                $todos | Export-Todo -Path $Path
-                userPrompt -Screen $Screen -Message "Todos written to: $path"
-            }
-            { $_ -in 'r', 'reload' } {
-
-                $todos = Import-Todo -Path $Path
-                userPrompt -Screen (($todos | ConvertTo-TodoString -IncludeLineNumber) -join "`n") -Message "Todos reloaded from: $path"
-            }
-            Default {
-                # Invalid choice
-                userPrompt -Screen $Screen -Message "Invalid choice: $Command. Press 'h' for help"
-            }
-        }
-    }
-    $todos = Import-Todo -Path $Path
-    userPrompt -Screen $startScreen -Command $Command
+    . $PSScriptRoot/gui/ConsoleGui.ps1
+    $gui = [ConsoleGui]::New($Path)
+    $gui.StartGui()
 }
 
 Export-ModuleMember -Function *-*
