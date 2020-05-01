@@ -4,6 +4,7 @@ class ConsoleGui {
     [string]$Path
     [psobject[]]$Todos
     [Hashtable]$ViewMap
+    [Hashtable]$CommandMap
     <#
         TODO: Define commands in a dynamical way
 
@@ -28,6 +29,7 @@ class ConsoleGui {
         $this.Path = $Path
         $this.LoadViewMap()
         $this.ViewMap['HeaderView'].SetPath($this.Path)
+        $this.LoadCommandMap()
     }
     [void]LoadViewMap() {
 
@@ -39,6 +41,19 @@ class ConsoleGui {
             $viewName = $file | Select-Object -ExpandProperty BaseName
             $view = Invoke-Expression "[$viewName]"
             $this.ViewMap[$viewName] =  $view::new($this)
+        }
+    }
+    [void]LoadCommandMap() {
+
+        #TODO Deduplicate code with LoadViewMap
+        # Loads all commands that are defined in /command
+        $this.CommandMap = @{}
+        $commandFiles = (Get-ChildItem "$PSScriptRoot/../../command" | Where-Object BaseName -match 'Command$')
+        foreach ($file in $commandFiles) {
+            . $file.FullName
+            $commandName = $file | Select-Object -ExpandProperty BaseName
+            $command = Invoke-Expression "[$commandName]"
+            $this.CommandMap[$commandName] =  $command::new($this)
         }
     }
     [void]SetTodos([psobject[]]$Todos) {
@@ -54,6 +69,10 @@ class ConsoleGui {
         Clear-Host
         Write-Host $this.ViewMap['HeaderView']
         Write-Host $View
+    }
+    [psobject]GetCommand($CommandName) {
+        #TODO Test if Command name exists.
+        return $this.CommandMap[$CommandName]
     }
     [void]WriteNotification([string]$Message) {
         
