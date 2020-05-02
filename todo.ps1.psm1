@@ -373,14 +373,23 @@ function Invoke-ConsoleGuiCommand {
     
     $gui = $ConsoleGui
 
-    if ($Command -match $gui.Command.List.Pattern) {
+    if ($Command -match $gui.Command.ListTodo.Pattern) {
 
-        $view = $gui.Command.List.Invoke($Command)
+        $view = $gui.Command.ListTodo.Invoke($Command)
         $gui.WriteView($view)
         $command = $gui.GetUserCommand()
         Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
 
-    } else {
+    } elseif ($Command -match $gui.Command.WriteFile.Pattern) {
+
+            #TODO Track Views (LastView)
+            #TODO Move Notification to views
+            $view = $gui.Command.WriteFile.Invoke($Command)
+            $gui.WriteView($gui.View.TodoList)
+            $gui.WriteNotification("Todos written to: $($gui.Path)")
+            $command = $gui.GetUserCommand()
+            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
+    }else {
         switch ($Command) {
             'start' {
 
@@ -416,15 +425,6 @@ function Invoke-ConsoleGuiCommand {
             { $_ -in 'h', '?', 'help' } {
 
                 $gui.WriteView($gui.View.Help)
-                $command = $gui.GetUserCommand()
-                Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-            }
-            { $_ -in 'w', 'write' } {
-
-                #TODO Track Views (LastView)
-                $gui.Todos | Export-Todo -Path $gui.Path
-                $gui.WriteView($gui.View.TodoList)
-                $gui.WriteNotification("Todos written to: $($gui.Path)")
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
             }

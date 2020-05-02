@@ -1,10 +1,10 @@
-class List {
+class ListTodo {
     
     [string]$Pattern
     [string]$Description
     [ConsoleGui]$Gui
 
-    List([ConsoleGui]$Gui) {
+    ListTodo([ConsoleGui]$Gui) {
 
         $this.Pattern = '^(l|ls|list) *(?<lineNumberPattern>[0-9-,]*)$'
         $this.Description = 'List all todos. Specify line number pattern to narrow down the list.'
