@@ -373,9 +373,9 @@ function Invoke-ConsoleGuiCommand {
     
     $gui = $ConsoleGui
 
-    if ($Command -match $gui.Command.Select.Pattern) {
+    if ($Command -match $gui.Command.List.Pattern) {
 
-        $view = $gui.Command.Select.Invoke($Command)
+        $view = $gui.Command.List.Invoke($Command)
         $gui.WriteView($view)
         $command = $gui.GetUserCommand()
         Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
@@ -385,12 +385,6 @@ function Invoke-ConsoleGuiCommand {
             'start' {
 
                 $gui.WriteView($gui.View.Start)
-                $command = $gui.GetUserCommand()
-                Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-            }
-            { $_ -in 'la', 'ls', 'listall' } {
-
-                $gui.WriteView($gui.View.TodoList)
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
             }
