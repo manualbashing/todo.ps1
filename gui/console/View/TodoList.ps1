@@ -1,8 +1,8 @@
-class TodoListView {
+class TodoList {
 
     [ConsoleGui]$Gui
 
-    TodoListView([ConsoleGui]$Gui) {
+    TodoList([ConsoleGui]$Gui) {
 
         $this.Gui = $Gui
     }

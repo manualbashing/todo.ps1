@@ -1,10 +1,10 @@
-class HeaderView {
+class Header {
 
     [string]$Name
     [string]$Path
     [ConsoleGui]$Gui
     
-    HeaderView([ConsoleGui]$Gui) {
+    Header([ConsoleGui]$Gui) {
 
         $this.Path = ''
         $this.Name = 'todo.ps1 simple gui'

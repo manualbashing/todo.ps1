@@ -1,7 +1,7 @@
-class HelpView {
+class Help {
     [ConsoleGui]$Gui
 
-    HelpView([ConsoleGui]$Gui) {
+    Help([ConsoleGui]$Gui) {
 
         $this.Gui = $Gui
     }

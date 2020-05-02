@@ -17,7 +17,7 @@ class ConsoleGui {
         $this.Name = "todo.ps1 simple gui"
         $this.Path = $Path
         $this.ViewInit()
-        $this.View.HeaderView.SetPath($this.Path)
+        $this.View.Header.SetPath($this.Path)
         $this.CommandInit()
     }
     [void]ViewInit() {
@@ -53,7 +53,7 @@ class ConsoleGui {
     [void]WriteView([psobject]$View) {
         
         Clear-Host
-        Write-Host $this.View['HeaderView']
+        Write-Host $this.View['Header']
         Write-Host $View
     }
     [void]WriteNotification([string]$Message) {
@@ -70,7 +70,7 @@ class ConsoleGui {
         $inputIsValid = $this._tryParseInteger($selection)
         if (-not $inputIsValid) {
 
-            $this.WriteView($this.View.TodoListView)
+            $this.WriteView($this.View.TodoList)
             $this.WriteNotification("Not a valid selection: $selection")
             return ($this.GetUserSelection())
         } else {

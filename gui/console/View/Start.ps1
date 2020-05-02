@@ -1,8 +1,8 @@
-class StartView {
+class Start {
 
     [ConsoleGui]$Gui
 
-    StartView([ConsoleGui]$Gui) { 
+    Start([ConsoleGui]$Gui) { 
 
         $this.Gui = $Gui
     }

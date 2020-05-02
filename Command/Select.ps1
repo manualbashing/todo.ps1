@@ -1,10 +1,10 @@
-class SelectCommand {
+class Select {
     
     [string]$Pattern
     [string]$Description = 'Narrow down the list of todo items.'
     [ConsoleGui]$Gui
 
-    SelectCommand([ConsoleGui]$Gui) {
+    Select([ConsoleGui]$Gui) {
 
         $this.Pattern = '^s(elect)? *(?<lineNumberPattern>[0-9-,]*)$'
         $this.Description = 'Narrow down the list of todo items.'
@@ -43,6 +43,6 @@ class SelectCommand {
         $selectedTodos = $this.Gui.Todos | 
             Where-Object { $_.SessionData.LineNumber -in $lineNumbers }
         
-        return $this.Gui.View.TodoListView.ListTodo($selectedTodos)
+        return $this.Gui.View.TodoList.ListTodo($selectedTodos)
     }
 }
