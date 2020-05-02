@@ -373,9 +373,9 @@ function Invoke-ConsoleGuiCommand {
     
     $gui = $ConsoleGui
 
-    if ($Command -match $gui.CommandMap.SelectCommand.Pattern) {
+    if ($Command -match $gui.Command.SelectCommand.Pattern) {
 
-        $view = $gui.CommandMap.SelectCommand.Invoke($Command)
+        $view = $gui.Command.SelectCommand.Invoke($Command)
         $gui.WriteView($view)
         $command = $gui.GetUserCommand()
         Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
@@ -384,13 +384,13 @@ function Invoke-ConsoleGuiCommand {
         switch ($Command) {
             'start' {
 
-                $gui.WriteView($gui.ViewMap.StartView)
+                $gui.WriteView($gui.View.StartView)
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
             }
             { $_ -in 'la', 'ls', 'listall' } {
 
-                $gui.WriteView($gui.GetView('TodoListView'))
+                $gui.WriteView($gui.View.TodoListView)
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
             }
@@ -408,20 +408,20 @@ function Invoke-ConsoleGuiCommand {
 
                 } else {
 
-                    $gui.WriteView($gui.GetView('TodoListView'))
+                    $gui.WriteView($gui.View.TodoListView)
                     $gui.WriteNotification("Select the item by its line number")
                     $lineNumber = $gui.GetUserSelection()
                     $selectedTodo = $gui.Todos | Where-Object { $_.SessionData.LineNumber -in $LineNumber }
                 }
                 #TODO Keep track of user commands for undo option.
                 $selectedTodo.Done = -not $selectedTodo.Done
-                $gui.WriteView($gui.GetView('TodoListView'))
+                $gui.WriteView($gui.View.TodoListView)
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
             }
             { $_ -in 'h', '?', 'help' } {
 
-                $gui.WriteView($gui.GetView('HelpView'))
+                $gui.WriteView($gui.View.HelpView)
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
             }
@@ -429,7 +429,7 @@ function Invoke-ConsoleGuiCommand {
 
                 #TODO Track Views (LastView)
                 $gui.Todos | Export-Todo -Path $gui.Path
-                $gui.WriteView($gui.ViewMap.TodoListView)
+                $gui.WriteView($gui.View.TodoListView)
                 $gui.WriteNotification("Todos written to: $($gui.Path)")
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
@@ -437,14 +437,14 @@ function Invoke-ConsoleGuiCommand {
             { $_ -in 'r', 'reload' } {
 
                 $gui.SetTodos((Import-Todo -Path $gui.Path))
-                $gui.WriteView($gui.GetView('TodoListView'))
+                $gui.WriteView($gui.('TodoListView'))
                 $gui.WriteNotification("Todos reloaded from: $($gui.Path)")
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
             }
             Default {
 
-                $gui.WriteView($gui.ViewMap.TodoListView)
+                $gui.WriteView($gui.View.TodoListView)
                 $gui.WriteNotification("Invalid choice: $Command. Press 'h' for help")
                 $command = $gui.GetUserCommand()
                 Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui

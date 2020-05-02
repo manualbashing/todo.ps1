@@ -43,6 +43,6 @@ class SelectCommand {
         $selectedTodos = $this.Gui.Todos | 
             Where-Object { $_.SessionData.LineNumber -in $lineNumbers }
         
-        return $this.Gui.GetView('TodoListView').ListTodo($selectedTodos)
+        return $this.Gui.View.TodoListView.ListTodo($selectedTodos)
     }
 }

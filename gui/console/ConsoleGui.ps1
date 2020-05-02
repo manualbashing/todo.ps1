@@ -3,20 +3,9 @@ class ConsoleGui {
     [string]$Name
     [string]$Path
     [psobject[]]$Todos
-    [Hashtable]$ViewMap
-    [Hashtable]$CommandMap
-    <#
-        TODO: Define commands in a dynamical way
+    [Hashtable]$View
+    [Hashtable]$Command
 
-        @{
-            'write' = {
-                $this.Todos | Export-Todo -Path $Path
-            }
-
-        }
-        This way it will be more easy to extend existing commands. And the methods
-        in this class can be reduced.
-    #>
     [bool]_tryParseInteger([string]$Input) {
 
         $n=0
@@ -27,52 +16,45 @@ class ConsoleGui {
         
         $this.Name = "todo.ps1 simple gui"
         $this.Path = $Path
-        $this.LoadViewMap()
-        $this.ViewMap['HeaderView'].SetPath($this.Path)
-        $this.LoadCommandMap()
+        $this.ViewInit()
+        $this.View.HeaderView.SetPath($this.Path)
+        $this.CommandInit()
     }
-    [void]LoadViewMap() {
+    [void]ViewInit() {
 
         # Loads all views that are defined in /gui/Console
-        $this.ViewMap = @{}
+        # TODO move to subfolder
+        $this.View = @{}
         $viewFiles = (Get-ChildItem $PSScriptRoot | Where-Object BaseName -match 'View$')
         foreach ($file in $viewFiles) {
             . $file.FullName
             $viewName = $file | Select-Object -ExpandProperty BaseName
-            $view = Invoke-Expression "[$viewName]"
-            $this.ViewMap[$viewName] =  $view::new($this)
+            $viewClass = Invoke-Expression "[$viewName]"
+            $this.View[$viewName] =  $viewClass::new($this)
         }
     }
-    [void]LoadCommandMap() {
+    [void]CommandInit() {
 
-        #TODO Deduplicate code with LoadViewMap
-        # Loads all commands that are defined in /command
-        $this.CommandMap = @{}
+        #TODO Deduplicate code with ViewInit
+        # Loads all commands that are defined in /Command
+        $this.Command = @{}
         $commandFiles = (Get-ChildItem "$PSScriptRoot/../../command" | Where-Object BaseName -match 'Command$')
         foreach ($file in $commandFiles) {
             . $file.FullName
             $commandName = $file | Select-Object -ExpandProperty BaseName
-            $command = Invoke-Expression "[$commandName]"
-            $this.CommandMap[$commandName] =  $command::new($this)
+            $commandClass = Invoke-Expression "[$commandName]"
+            $this.Command[$commandName] =  $commandClass::new($this)
         }
     }
     [void]SetTodos([psobject[]]$Todos) {
 
         $this.Todos = $Todos
     }
-    [psobject]GetView($ViewName) {
-        #TODO Test if View name exists.
-        return $this.ViewMap[$ViewName]
-    }
     [void]WriteView([psobject]$View) {
         
         Clear-Host
-        Write-Host $this.ViewMap['HeaderView']
+        Write-Host $this.View['HeaderView']
         Write-Host $View
-    }
-    [psobject]GetCommand($CommandName) {
-        #TODO Test if Command name exists.
-        return $this.CommandMap[$CommandName]
     }
     [void]WriteNotification([string]$Message) {
         
@@ -88,7 +70,7 @@ class ConsoleGui {
         $inputIsValid = $this._tryParseInteger($selection)
         if (-not $inputIsValid) {
 
-            $this.WriteView($this.GetView('TodoListView'))
+            $this.WriteView($this.View.TodoListView)
             $this.WriteNotification("Not a valid selection: $selection")
             return ($this.GetUserSelection())
         } else {
