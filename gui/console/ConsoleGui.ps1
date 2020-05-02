@@ -25,7 +25,7 @@ class ConsoleGui {
         # Loads all views that are defined in /gui/Console
         # TODO move to subfolder
         $this.View = @{}
-        $viewFiles = (Get-ChildItem $PSScriptRoot | Where-Object BaseName -match 'View$')
+        $viewFiles = Get-ChildItem "$PSScriptRoot/View"
         foreach ($file in $viewFiles) {
             . $file.FullName
             $viewName = $file | Select-Object -ExpandProperty BaseName
@@ -38,7 +38,7 @@ class ConsoleGui {
         #TODO Deduplicate code with ViewInit
         # Loads all commands that are defined in /Command
         $this.Command = @{}
-        $commandFiles = (Get-ChildItem "$PSScriptRoot/../../command" | Where-Object BaseName -match 'Command$')
+        $commandFiles = Get-ChildItem "$PSScriptRoot/../../Command"
         foreach ($file in $commandFiles) {
             . $file.FullName
             $commandName = $file | Select-Object -ExpandProperty BaseName
