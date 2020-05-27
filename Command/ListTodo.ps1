@@ -2,21 +2,24 @@ class ListTodo {
     
     [string]$Pattern
     [string]$Description
-    [ConsoleGui]$Gui
+    [ConsoleView]$View
 
-    ListTodo([ConsoleGui]$Gui) {
+    ListTodo([ConsoleView]$View) {
 
         $this.Pattern = '^(l|ls|list) *(?<lineNumberPattern>[0-9-,]*)$'
         $this.Description = 'List all todos. Specify line number pattern to narrow down the list.'
-        $this.Gui = $Gui
+        $this.View = $View
     }
 
+    [psobject]Invoke() {
+
+        return $this.Invoke('')
+    }
     [psobject]Invoke([string]$Command) {
 
-        $null = $Command -match $this.Pattern
-        $lineNumberPattern = $Matches['LineNumberPattern']
-        if($lineNumberPattern) {
-
+        if(($Command -match $this.Pattern) -and $Matches['LineNumberPattern']) {
+            
+            $lineNumberPattern = $Matches['LineNumberPattern']
             [int[]]$lineNumbers = @()
             # We ignore whitespaces in the pattern.
             $lineNumberPattern = $lineNumberPattern -replace ' '
@@ -42,12 +45,12 @@ class ListTodo {
                     }
                 }
             }
-            $selectedTodos = $this.Gui.Todos | 
+            $selectedTodos = $this.View.Todo | 
                 Where-Object { $_.SessionData.LineNumber -in $lineNumbers }
         }
         else {
-            $selectedTodos = $this.Gui.Todos
+            $selectedTodos = $this.View.Todo
         }
-        return $this.Gui.View.TodoList.ListTodo($selectedTodos)
+        return (($selectedTodos | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
     }
 }

@@ -354,7 +354,6 @@ function New-ConsoleGui {
     #TODO make sure, Gui class exists.
     . $PSScriptRoot/gui/$GuiName/${GuiName}Gui.ps1
     $gui = Invoke-Expression "[$($GuiName)Gui]::New('$Path')"
-    $gui.SetTodos((Import-Todo -Path $Path))
     return $gui
 }
 function Invoke-ConsoleGuiCommand {

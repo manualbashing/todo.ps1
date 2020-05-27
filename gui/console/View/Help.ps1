@@ -1,8 +1,13 @@
 class Help : ConsoleView {
     [ConsoleGui]$Gui
+    [psobject[]]$Todo
 
-    Help([ConsoleGui]$Gui) : base ([ConsoleGui]$Gui) {
+    Help([ConsoleGui]$Gui, [psobject[]]$Todo) : base ([ConsoleGui]$Gui, [psobject[]]$Todo) {
 
+        $this.initCommand(@(
+            'ListTodo',
+            'WriteFile'
+        ))
     }
 
     #@Override

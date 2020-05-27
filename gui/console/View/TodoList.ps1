@@ -1,18 +1,19 @@
 class TodoList : ConsoleView {
 
     [ConsoleGui]$Gui
+    [psobject[]]$Todo
 
-    TodoList([ConsoleGui]$Gui) : base ([ConsoleGui]$Gui){
+    TodoList([ConsoleGui]$Gui, [psobject[]]$Todo) : base ([ConsoleGui]$Gui, [psobject[]]$Todo){
 
+        $this.initCommand(@(
+            'ListTodo',
+            'WriteFile'
+        ))
     }
 
-    [string]ListTodo([psobject[]]$TodoList) {
-        
-        return (($TodoList | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
-    }
     #@Override
     [string]ToString() {
         
-        return $this.ListTodo($this.Gui.Todos)
+        return $this.Command.ListTodo.Invoke()
     }
 }
