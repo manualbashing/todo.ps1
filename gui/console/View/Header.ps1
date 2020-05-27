@@ -1,14 +1,13 @@
-class Header {
+class Header : ConsoleView {
 
     [string]$Name
     [string]$Path
     [ConsoleGui]$Gui
     
-    Header([ConsoleGui]$Gui) {
+    Header([ConsoleGui]$Gui) : base ([ConsoleGui]$Gui) {
 
         $this.Path = ''
         $this.Name = 'todo.ps1 simple gui'
-        $this.Gui = $Gui
     }
     #@Override
     [string]ToString() {

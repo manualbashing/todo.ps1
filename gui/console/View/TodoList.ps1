@@ -1,10 +1,9 @@
-class TodoList {
+class TodoList : ConsoleView {
 
     [ConsoleGui]$Gui
 
-    TodoList([ConsoleGui]$Gui) {
+    TodoList([ConsoleGui]$Gui) : base ([ConsoleGui]$Gui){
 
-        $this.Gui = $Gui
     }
 
     [string]ListTodo([psobject[]]$TodoList) {

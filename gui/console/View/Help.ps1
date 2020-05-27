@@ -1,9 +1,8 @@
-class Help {
+class Help : ConsoleView {
     [ConsoleGui]$Gui
 
-    Help([ConsoleGui]$Gui) {
+    Help([ConsoleGui]$Gui) : base ([ConsoleGui]$Gui) {
 
-        $this.Gui = $Gui
     }
 
     #@Override

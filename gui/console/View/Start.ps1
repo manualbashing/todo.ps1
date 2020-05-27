@@ -1,10 +1,14 @@
-class Start {
+class Start : ConsoleView {
 
     [ConsoleGui]$Gui
+    [Hashtable]$Command
 
-    Start([ConsoleGui]$Gui) { 
+    Start([ConsoleGui]$Gui) : base ([ConsoleGui]$Gui){ 
 
-        $this.Gui = $Gui
+        $this.setCommand(@(
+            'ListTodo',
+            'WriteFile'
+        ))
     }
 
     #@Override

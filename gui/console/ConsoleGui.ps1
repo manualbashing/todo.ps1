@@ -16,14 +16,16 @@ class ConsoleGui {
         
         $this.Name = "todo.ps1 simple gui"
         $this.Path = $Path
+        $this.CommandInit()
         $this.ViewInit()
         $this.View.Header.SetPath($this.Path)
-        $this.CommandInit()
+
     }
     [void]ViewInit() {
 
         # Loads all views that are defined in /gui/Console
         # TODO move to subfolder
+        . $PSScriptRoot/ConsoleView.ps1
         $this.View = @{}
         $viewFiles = Get-ChildItem "$PSScriptRoot/View"
         foreach ($file in $viewFiles) {
