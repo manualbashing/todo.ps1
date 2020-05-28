@@ -12,12 +12,12 @@ class WriteFile {
         $this.Description = 'Write all changes back to the todo.txt source file.'
         $this.View = $View
     }
-    [psobject]Invoke([string]$Command) {
+    [ConsoleView]Invoke([string]$Command) {
 
-        $this.View.Todo | Export-Todo -Path $this.View.Gui.Path
-        # TODO return last view.
+        $outPath = $this.View.Gui.Path
+        $this.View.Gui.Todo | Export-Todo -Path $outPath
         # TODO Use actual source from SessionData
-        # TOOD Add notification
+        $this.View.Notification = "Wrote current todos to $outPath"
         return $this.View
     }
 }

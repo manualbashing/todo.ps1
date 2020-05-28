@@ -13,46 +13,21 @@ class ListTodo {
         $this.View = $View
     }
 
-    [void]Invoke() {
+    [ConsoleView]Invoke() {
 
-        $this.Invoke('')
+        return $this.Invoke('')
     }
-    [void]Invoke([string]$Command) {
+    [ConsoleView]Invoke([string]$Command) {
 
+        
+        $lineNumberPattern = "1-$($this.View.Gui.Todo.Count)"
         if(($Command -match $this.Pattern) -and $Matches['LineNumberPattern']) {
             
             $lineNumberPattern = $Matches['LineNumberPattern']
-            [int[]]$lineNumbers = @()
-            # We ignore whitespaces in the pattern.
-            $lineNumberPattern = $lineNumberPattern -replace ' '
-            foreach ($pattern in ($lineNumberPattern -split ',')) {
-
-                switch ($pattern) {
-
-                    { $_ -match '^[1-9][0-9]*$' } { 
-
-                        # Individual Number >0
-                        $lineNumbers += $pattern
-
-                    }
-                    { $_ -match '^[1-9][0-9]*-[1-9][0-9]*$' } {
-
-                        # Range expression 1-5 => 1,2,3,4,5
-                        $start,$end = $pattern -split '-'
-                        $lineNumbers += $start..$end
-
-                    }
-                    Default {
-                        # If pattern is invalid, nothing is returned.
-                    }
-                }
-            }
-            $selectedTodos = $this.View.Todo | 
-                Where-Object { $_.SessionData.LineNumber -in $lineNumbers }
         }
-        else {
-            $selectedTodos = $this.View.Todo
-        }
-        $this.View.Todo = $selectedTodos
+        $this.View.Gui.View.TodoList.VisibleTodo = $this.View.Gui.Todo |
+            Select-Todo -LineNumberPattern:$lineNumberPattern
+
+        return $this.View.Gui.View.TodoList
     }
 }

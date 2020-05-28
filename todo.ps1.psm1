@@ -343,7 +343,71 @@ function Remove-TodoProject {
     }
 }
 
-function New-ConsoleGui {
+function Select-Todo {
+
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [psobject[]]
+        $InputObject,
+
+        [Parameter()]
+        [psobject[]]
+        $LineNumberPattern = '',
+
+        [Parameter()]
+        [psobject[]]
+        $Property = $null,
+
+        [Parameter()]
+        [psobject]
+        $ExpandProperty = $null
+    )
+
+    Begin {
+        $todos = @()
+    }
+    Process {
+        foreach ($todo in $InputObject) {
+            $todos += $todo 
+        }
+        
+    }
+    End {
+        if ($LineNumberPattern -ne '') {
+        
+            [int[]]$lineNumbers = @()
+            # We ignore whitespaces in the pattern.
+            $LineNumberPattern = $LineNumberPattern -replace ' '
+            foreach ($pattern in ($LineNumberPattern -split ',')) {
+
+                switch ($pattern) {
+
+                    { $_ -match '^[1-9][0-9]*$' } { 
+
+                        # Individual Number >0
+                        $lineNumbers += $pattern
+
+                    }
+                    { $_ -match '^[1-9][0-9]*-[1-9][0-9]*$' } {
+
+                        # Range expression 1-5 => 1,2,3,4,5
+                        $start, $end = $pattern -split '-'
+                        $lineNumbers += $start..$end
+
+                    }
+                    Default {
+                        # If pattern is invalid, nothing is returned.
+                    }
+                }
+            }
+            $todos = $todos | Where-Object { $_.SessionData.LineNumber -in $lineNumbers }
+        }
+        $todos | Select-Object -Property:$Property -ExpandProperty:$ExpandProperty
+    }
+}
+
+function New-Gui {
 
     [Cmdletbinding()]
     param(
@@ -356,94 +420,17 @@ function New-ConsoleGui {
     $gui = Invoke-Expression "[$($GuiName)Gui]::New('$Path')"
     return $gui
 }
-function Invoke-ConsoleGuiCommand {
+function Invoke-Gui {
 
     [Cmdletbinding()]
     param(
 
-        [Parameter(Mandatory = $false, Position = 0)]
-        [string]
-        $Command = 'start',
-
         [Parameter(Mandatory = $false)]
         [psobject]
-        $ConsoleGui = (New-ConsoleGui)
+        $Gui = (New-Gui)
     )
     
-    $gui = $ConsoleGui
-
-    if ($Command -match $gui.Command.ListTodo.Pattern) {
-
-        $view = $gui.Command.ListTodo.Invoke($Command)
-        $gui.WriteView($view)
-        $command = $gui.GetUserCommand()
-        Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-
-    } elseif ($Command -match $gui.Command.WriteFile.Pattern) {
-
-            #TODO Track Views (LastView)
-            #TODO Move Notification to views
-            $view = $gui.Command.WriteFile.Invoke($Command)
-            $gui.WriteView($gui.View.TodoList)
-            $gui.WriteNotification("Todos written to: $($gui.Path)")
-            $command = $gui.GetUserCommand()
-            Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-    }else {
-        switch ($Command) {
-            'start' {
-
-                $gui.WriteView($gui.View.Start)
-                $command = $gui.GetUserCommand()
-                Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-            }
-            { $_ -in 'q', 'quit', 'exit' } {
-
-                break
-            }
-            { $_ -match '^x' } {
-            
-                $userChoiceQualifier = $Command -replace '^x'
-                $lineNumber = 0
-                if ([int]::TryParse($userChoiceQualifier, [ref]$lineNumber)) {
-
-                    $selectedTodo = $gui.Todos | Where-Object { $_.SessionData.LineNumber -in $LineNumber }
-
-                } else {
-
-                    $gui.WriteView($gui.View.TodoList)
-                    $gui.WriteNotification("Select the item by its line number")
-                    $lineNumber = $gui.GetUserSelection()
-                    $selectedTodo = $gui.Todos | Where-Object { $_.SessionData.LineNumber -in $LineNumber }
-                }
-                #TODO Keep track of user commands for undo option.
-                $selectedTodo.Done = -not $selectedTodo.Done
-                $gui.WriteView($gui.View.TodoList)
-                $command = $gui.GetUserCommand()
-                Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-            }
-            { $_ -in 'h', '?', 'help' } {
-
-                $gui.WriteView($gui.View.Help)
-                $command = $gui.GetUserCommand()
-                Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-            }
-            { $_ -in 'r', 'reload' } {
-
-                $gui.SetTodos((Import-Todo -Path $gui.Path))
-                $gui.WriteView($gui.('TodoList'))
-                $gui.WriteNotification("Todos reloaded from: $($gui.Path)")
-                $command = $gui.GetUserCommand()
-                Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-            }
-            Default {
-
-                $gui.WriteView($gui.View.TodoList)
-                $gui.WriteNotification("Invalid choice: $Command. Press 'h' for help")
-                $command = $gui.GetUserCommand()
-                Invoke-ConsoleGuiCommand -Command $command -ConsoleGui $gui
-            }
-        }
-    }
+    $Gui.Invoke($Gui.View.Start)
 }
 
 Export-ModuleMember -Function *-*
