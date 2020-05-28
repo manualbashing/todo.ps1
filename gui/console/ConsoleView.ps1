@@ -3,12 +3,14 @@ class ConsoleView {
     [ConsoleGui]$Gui
     [Hashtable]$Command
     [psobject[]]$Todo
+    [string]$Notification
 
     ConsoleView([ConsoleGui]$Gui, [psobject[]]$Todo) { 
 
         $this.Gui = $Gui
-        $this.Command = @{}
+        $this.Command = @{ }
         $this.Todo = $Todo
+        $this.Notification = ''
     }
 
     [void]initCommand([string[]]$CommandNames) {
@@ -20,7 +22,8 @@ class ConsoleView {
             . $file.FullName
             $commandName = $file | Select-Object -ExpandProperty BaseName
             $commandClass = Invoke-Expression "[$commandName]"
-            $this.Command[$commandName] =  $commandClass::new($this)
+            $this.Command[$commandName] = $commandClass::new($this)
         }
     }
+
 }

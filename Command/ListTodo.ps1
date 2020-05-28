@@ -1,21 +1,23 @@
 class ListTodo {
     
+    [string]$Name
     [string]$Pattern
     [string]$Description
     [ConsoleView]$View
 
     ListTodo([ConsoleView]$View) {
 
+        $this.Name = 'ListTodo'
         $this.Pattern = '^(l|ls|list) *(?<lineNumberPattern>[0-9-,]*)$'
         $this.Description = 'List all todos. Specify line number pattern to narrow down the list.'
         $this.View = $View
     }
 
-    [psobject]Invoke() {
+    [void]Invoke() {
 
-        return $this.Invoke('')
+        $this.Invoke('')
     }
-    [psobject]Invoke([string]$Command) {
+    [void]Invoke([string]$Command) {
 
         if(($Command -match $this.Pattern) -and $Matches['LineNumberPattern']) {
             
@@ -51,6 +53,6 @@ class ListTodo {
         else {
             $selectedTodos = $this.View.Todo
         }
-        return (($selectedTodos | ConvertTo-TodoString -IncludeLineNumber) -join "`n")
+        $this.View.Todo = $selectedTodos
     }
 }

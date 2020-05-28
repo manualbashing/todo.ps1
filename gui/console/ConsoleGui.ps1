@@ -20,9 +20,9 @@ class ConsoleGui {
     }
     [void]ViewInit() {
 
-        # Loads all views that are defined in /gui/Console
-        # TODO move to subfolder
-        
+        # Loads all views that are defined in /gui/Console/View
+        #TODO Make sure ConsoleView is available before instantiating ConsoleGui
+
         . $PSScriptRoot/ConsoleView.ps1
         $todos = Import-Todo -Path $this.Path
         $this.View = @{}
@@ -37,28 +37,49 @@ class ConsoleGui {
     [void]WriteView([psobject]$View) {
         
         Clear-Host
-        Write-Host $View
-    }
-    [void]WriteNotification([string]$Message) {
-        
-        Write-Host "`n    $Message`n"
-    }
-    [string]GetUserCommand() {
+        Write-Host "
+---------------------------------
+$($this.Name)
+$($this.Path)
+---------------------------------
 
-        return (Read-Host -Prompt "`nTODO>")
+$View
+        
+    $($View.Notification)
+"
     }
-    [int]GetUserSelection() {
+
+    [string]GetUserCommand([psobject]$View) {
+
+        $userCommand = (Read-Host -Prompt "`nTODO>")
+
+        foreach ($cmdKey in  $View.Command.Keys) {
+
+            if ($userCommand -match $View.Command[$cmdKey].Pattern) {
+                return $userCommand
+            }
+        }
+        $View.Notification = "'$userCommand' is not a valid command in this view."
+        $this.WriteView($View)
+        return $this.GetUserCommand($View)
+    }
+
+    [int]GetUserSelection([psobject]$View) {
 
         $selection = Read-Host -Prompt "SELECT>"
         $inputIsValid = $this._tryParseInteger($selection)
-        if (-not $inputIsValid) {
+        
+        if ($inputIsValid -and [int]$selection -le $View.Todo.Count) {
 
-            $this.WriteView($this.View.TodoList)
-            $this.WriteNotification("Not a valid selection: $selection")
-            return ($this.GetUserSelection())
-        } else {
-            #TODO implement "cancel operation"
             return [int]$selection
+
+        } else {
+
+            $View.Notification = "Not a valid selection: $selection"
+            $this.WriteView($View)
+            return $this.GetUserSelection($View)
+            #TODO implement "cancel operation"
+            #TODO allow range pattern
         }
     }
 }

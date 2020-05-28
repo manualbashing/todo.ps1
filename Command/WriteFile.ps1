@@ -3,8 +3,11 @@ class WriteFile {
     [string]$Pattern
     [string]$Description
     [ConsoleView]$View
+    [string]$Name
 
     WriteFile([ConsoleView]$View) {
+        
+        $this.Name = 'WriteFile'
         $this.Pattern = '^(w|s|write|save).*$'
         $this.Description = 'Write all changes back to the todo.txt source file.'
         $this.View = $View

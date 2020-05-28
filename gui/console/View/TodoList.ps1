@@ -13,7 +13,7 @@ class TodoList : ConsoleView {
 
     #@Override
     [string]ToString() {
-        
-        return $this.Command.ListTodo.Invoke()
+
+        return ($this.Todo | ConvertTo-TodoString -IncludeLineNumber) -join "`n"
     }
 }
